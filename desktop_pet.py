@@ -26,7 +26,30 @@ import requests
 import json
 import subprocess
 import time
+import ctypes
+from ctypes import wintypes
 from spirits_config import SPIRITS_LIST
+
+
+# ========== Windows API：获取当前活动窗口 ==========
+def get_active_window_info():
+    """返回 (窗口标题, 窗口类名)"""
+    try:
+        user32 = ctypes.windll.user32
+        hwnd = user32.GetForegroundWindow()
+        if hwnd == 0:
+            return ("（无活动窗口）", "")
+        length = user32.GetWindowTextLengthW(hwnd)
+        buf = ctypes.create_unicode_buffer(length + 1)
+        user32.GetWindowTextW(hwnd, buf, length + 1)
+        title = buf.value or "（无标题）"
+        class_buf = ctypes.create_unicode_buffer(256)
+        user32.GetClassNameW(hwnd, class_buf, 256)
+        class_name = class_buf.value
+        return (title, class_name)
+    except Exception:
+        return ("（获取失败）", "")
+
 
 # 音乐控制支持
 try:
@@ -786,12 +809,18 @@ class DesktopPet:
 
     def _get_reply(self, user_msg):
         """获取回复"""
+        # 先检查是否是屏幕/窗口检测指令
+        screen_result = self._check_screen_command(user_msg)
+        if screen_result:
+            self.root.after(0, lambda r=screen_result, u=user_msg: self._show_reply(r, u))
+            return
+
         # 先检查是否是记忆保存指令
         memory_result = self._check_memory_command(user_msg)
         if memory_result:
             self.root.after(0, lambda r=memory_result, u=user_msg: self._show_reply(r, u))
             return
-        
+
         # 检查是否是文件操作指令
         file_result = self._check_file_command(user_msg)
         if file_result:
@@ -1145,7 +1174,19 @@ class DesktopPet:
             self.root.after(0, lambda: self.show_bubble("文件操作完成", duration=2000))
             return result
         return None
-    
+
+    def _check_screen_command(self, msg):
+        """检查是否是屏幕/窗口检测指令"""
+        keywords = ["屏幕上", "屏幕里", "窗口", "开着", "当前窗口", "活动窗口",
+                    "现在在看什么", "现在在用", "什么应用", "开了什么"]
+        msg_lower = msg.lower()
+        if any(k in msg_lower for k in keywords):
+            title, class_name = get_active_window_info()
+            return (f"🖥️ 当前活动窗口：\n"
+                    f"标题：{title}\n"
+                    f"类名：{class_name}")
+        return None
+
     def _check_memory_command(self, msg):
         """检查是否是记忆保存指令"""
         msg_lower = msg.lower().strip()
