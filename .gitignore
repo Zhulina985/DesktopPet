@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# 虚拟环境
+.env
+.venv
+env/
+venv/
+ENV/
+
+# 截图 / 日志 / 临时文件
+*.png
+*.jpg
+*.jpeg
+Gaia_screenshot_*.png
+last_spirit.txt
+
+# 快捷方式
+*.lnk
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# 敏感配置（API key 等）
+config_secret.py
+.env.local
